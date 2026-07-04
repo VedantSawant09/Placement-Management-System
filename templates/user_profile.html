@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>User Profile: {{ user["name"] }}</h2>
+        <div>
+            {% if user["resume"] %}
+                <a href="{{ url_for('download_resume', user_id=user['id']) }}" class="btn btn-success">
+                    <i class="fas fa-download"></i> Download Resume
+                </a>
+            {% endif %}
+            <button class="btn btn-primary" onclick="window.print()">
+                <i class="fas fa-print"></i> Print Profile
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>Profile Information</h5>
+                    {% if user["is_verified"] %}
+                        <span class="badge bg-success">Verified</span>
+                    {% else %}
+                        <span class="badge bg-warning">Pending Verification</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Name:</strong> {{ user["name"] }}</p>
+                            <p><strong>Email:</strong> {{ user["email"] }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>CGPA:</strong> {{ user["cgpa"] or 'Not provided' }}</p>
+                            <p><strong>Role:</strong> {{ user["role"].title() }}</p>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <strong>Skills:</strong>
+                        <div class="skills-container">
+                            {% if user["skills_text"] %}
+                                {% for skill in user["skills_text"].split(',') %}
+                                    <span class="badge bg-secondary me-1 mb-1">{{ skill.strip() }}</span>
+                                {% endfor %}
+                            {% else %}
+                                Not provided
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>Resume</h5>
+                </div>
+                <div class="card-body">
+                    {% if user["resume"] %}
+                        <pre class="resume-content bg-light p-3 rounded" style="white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 14px;">{{ user["resume"] }}</pre>
+                    {% else %}
+                        <p class="text-muted">No resume uploaded</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Test Results</h5>
+                </div>
+                <div class="card-body">
+                    {% if results %}
+                        <div class="list-group">
+                            {% for result in results %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ result["test_name"] }}</h6>
+                                    <small>{{ "%.1f"|format((result["score"]/result["total"])*100) }}%</small>
+                                </div>
+                                <p class="mb-1">Score: {{ result["score"] }}/{{ result["total"] }}</p>
+                                <small class="text-muted">{{ result["timestamp"] }}</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No test results available.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>Interview Slots</h5>
+                </div>
+                <div class="card-body">
+                    {% if slots %}
+                        <div class="list-group">
+                            {% for slot in slots %}
+                            <div class="list-group-item">
+                                <small>{{ slot["slot_time"] }}</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No interview slots scheduled.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>Quick Stats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-primary">{{ results|length }}</h4>
+                            <small class="text-muted">Tests Taken</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-success">{{ slots|length }}</h4>
+                            <small class="text-muted">Slots Booked</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a class="btn btn-secondary" href="{{ url_for('interviewer_dashboard') }}">Back to Interviewer Dashboard</a>
+        <a class="btn btn-secondary ms-2" href="{{ url_for('admin_dashboard') }}">Back to Admin Dashboard</a>
+    </div>
+</div>
+
+<script>
+// Add some interactivity
+document.addEventListener('DOMContentLoaded', function() {
+    // Highlight skills on hover
+    const skillBadges = document.querySelectorAll('.badge');
+    skillBadges.forEach(badge => {
+        badge.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.05)';
+            this.style.transition = 'transform 0.2s';
+        });
+        badge.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+        });
+    });
+
+    // Copy email functionality
+    const emailElement = document.querySelector('p:contains("Email:")');
+    if (emailElement) {
+        emailElement.style.cursor = 'pointer';
+        emailElement.title = 'Click to copy email';
+        emailElement.addEventListener('click', function() {
+            const email = this.textContent.replace('Email: ', '');
+            navigator.clipboard.writeText(email).then(function() {
+                // Show temporary feedback
+                const original = emailElement.textContent;
+                emailElement.textContent = 'Email: ' + email + ' (Copied!)';
+                setTimeout(() => {
+                    emailElement.textContent = original;
+                }, 1000);
+            });
+        });
+    }
+});
+</script>
+
+<style>
+.skills-container {
+    margin-top: 5px;
+}
+
+.resume-content {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+@media print {
+    .btn, .card-header {
+        display: none !important;
+    }
+
+    .card {
+        border: 1px solid #000 !important;
+        margin-bottom: 20px;
+    }
+
+    .card-body {
+        padding: 15px;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+ <div class="col-md-6">
+   <h3>Registration</h3>
+   <form method="post" id="registerForm">
+     <div class="mb-2 student-only">
+       <input name="name" class="form-control" placeholder="Name" id="name">
+     </div>
+     <div class="mb-2">
+       <input name="email" class="form-control" placeholder="Email" type="email" required id="email">
+       <small id="emailHelp" class="form-text text-muted"></small>
+     </div>
+     <div class="mb-2">
+       <input name="password" class="form-control" placeholder="Password" type="password" required id="password">
+       <small id="passwordHelp" class="form-text text-muted">Password must be at least 6 characters</small>
+     </div>
+     <div class="mb-3">
+       <label>Role:</label><br>
+       <div class="form-check form-check-inline">
+         <input class="form-check-input" type="radio" name="role" id="role_student" value="student" checked>
+         <label class="form-check-label" for="role_student">Student</label>
+       </div>
+       <div class="form-check form-check-inline">
+         <input class="form-check-input" type="radio" name="role" id="role_admin" value="admin">
+         <label class="form-check-label" for="role_admin">Admin</label>
+       </div>
+     </div>
+     <div class="mb-2 student-only">
+       <input name="cgpa" class="form-control" placeholder="CGPA (e.g., 8.5)" type="number" step="0.01" min="0" max="10" id="cgpa">
+     </div>
+     <div class="mb-2 student-only">
+       <textarea name="skills" class="form-control" placeholder="Skills or resume text (comma separated)" id="skills"></textarea>
+     </div>
+     <div class="mb-2 student-only">
+       <textarea name="resume" class="form-control" placeholder="Full resume text" rows="4" id="resume"></textarea>
+     </div>
+      <div class="alert alert-info mt-3" id="studentAlert">
+        <small><i class="fas fa-info-circle"></i> Your registration will be reviewed by an administrator before you can access the system.</small>
+      </div>
+      <div class="alert alert-success mt-3" id="adminAlert" style="display: none;">
+        <small><i class="fas fa-check-circle"></i> Admin accounts are verified immediately.</small>
+      </div>
+      <button class="btn btn-primary" type="submit" id="submitBtn">Submit Registration</button>
+    </form>
+  </div>
+</div>
+
+<script>
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+    const password = document.getElementById('password').value;
+    const email = document.getElementById('email').value;
+    const cgpa = document.getElementById('cgpa').value;
+
+    // Password validation
+    if (password.length < 6) {
+        e.preventDefault();
+        alert('Password must be at least 6 characters long');
+        return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        e.preventDefault();
+        alert('Please enter a valid email address');
+        return;
+    }
+
+    // CGPA validation
+    if (cgpa && (cgpa < 0 || cgpa > 10)) {
+        e.preventDefault();
+        alert('CGPA must be between 0 and 10');
+        return;
+    }
+
+    // Show loading state
+    document.getElementById('submitBtn').innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Registering...';
+    document.getElementById('submitBtn').disabled = true;
+});
+
+// Real-time validation feedback
+document.getElementById('password').addEventListener('input', function() {
+    const passwordHelp = document.getElementById('passwordHelp');
+    if (this.value.length < 6) {
+        passwordHelp.style.color = 'red';
+    } else {
+        passwordHelp.style.color = 'green';
+    }
+});
+
+document.getElementById('email').addEventListener('input', function() {
+    const emailHelp = document.getElementById('emailHelp');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (this.value && !emailRegex.test(this.value)) {
+        emailHelp.textContent = 'Invalid email format';
+        emailHelp.style.color = 'red';
+    } else {
+        emailHelp.textContent = '';
+    }
+});
+
+// Handle role selection change
+document.querySelectorAll('input[name="role"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const studentAlert = document.getElementById('studentAlert');
+        const adminAlert = document.getElementById('adminAlert');
+        const studentOnlyFields = document.querySelectorAll('.student-only');
+        const nameField = document.getElementById('name');
+
+        if (this.value === 'student') {
+            studentAlert.style.display = 'block';
+            adminAlert.style.display = 'none';
+            studentOnlyFields.forEach(field => field.style.display = 'block');
+            nameField.required = true;
+            nameField.placeholder = 'Name';
+        } else if (this.value === 'admin') {
+            studentAlert.style.display = 'none';
+            adminAlert.style.display = 'block';
+            studentOnlyFields.forEach(field => field.style.display = 'none');
+            nameField.required = false;
+            nameField.placeholder = 'Name (optional for admin)';
+        }
+    });
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const defaultRole = document.querySelector('input[name="role"]:checked');
+    if (defaultRole) {
+        defaultRole.dispatchEvent(new Event('change'));
+    }
+});
+</script>
+{% endblock %}

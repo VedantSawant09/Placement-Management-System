@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="p-4 bg-white rounded shadow-sm">
+    <h1>Placement Management System</h1>
+    <p>Take tests, schedule aptitude slots and see AI skills matches.</p>
+
+    <h4>Available Test Sets</h4>
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <div class="card h-100">
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title">Test 1 - Basic CS</h5>
+            <p class="card-text">Computer Science fundamentals including SQL, Python, and binary numbers.</p>
+            <p class="text-muted">3 Questions • ~5 minutes</p>
+            <div class="mt-auto">
+              <a href="{{ url_for('take_test', testfile='test1.json') }}" class="btn btn-primary me-2">Start Test</a>
+              <a href="{{ url_for('download_test', testfile='test1.json') }}" class="btn btn-outline-secondary btn-sm">📥 Download</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <div class="card h-100">
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title">Test 2 - Basic Aptitude</h5>
+            <p class="card-text">Mathematics and logical reasoning aptitude questions.</p>
+            <p class="text-muted">3 Questions • ~5 minutes</p>
+            <div class="mt-auto">
+              <a href="{{ url_for('take_test', testfile='test2.json') }}" class="btn btn-primary me-2">Start Test</a>
+              <a href="{{ url_for('download_test', testfile='test2.json') }}" class="btn btn-outline-secondary btn-sm">📥 Download</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <div class="card h-100">
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title">Aptitude Test</h5>
+            <p class="card-text">Series completion, area calculation, and multiplication problems.</p>
+            <p class="text-muted">3 Questions • ~5 minutes</p>
+            <div class="mt-auto">
+              <a href="{{ url_for('take_test', testfile='aptitude.json') }}" class="btn btn-primary me-2">Start Test</a>
+              <a href="{{ url_for('download_test', testfile='aptitude.json') }}" class="btn btn-outline-secondary btn-sm">📥 Download</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <h4>Quick Actions</h4>
+      <a href="{{ url_for('schedule_slot') }}" class="btn btn-success me-2">📅 Schedule Interview Slot</a>
+      <a href="{{ url_for('dashboard') }}" class="btn btn-info me-2">📊 View Dashboard</a>
+      <a href="{{ url_for('seed_roles') }}" class="btn btn-warning">🔄 Seed Demo Data</a>
+    </div>
+  </div>
+{% endblock %}

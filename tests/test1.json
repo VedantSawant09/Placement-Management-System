@@ -1,0 +1,29 @@
+{
+  "title": "Test 1 - Basic CS",
+  "questions": [
+    {
+      "q": "What does SQL stand for?",
+      "options": [
+        "Structured Query Language",
+        "Simple Query Language"
+      ],
+      "answer": "Structured Query Language"
+    },
+    {
+      "q": "Which is a Python keyword for function?",
+      "options": [
+        "func",
+        "def"
+      ],
+      "answer": "def"
+    },
+    {
+      "q": "Binary of 2 is?",
+      "options": [
+        "10",
+        "01"
+      ],
+      "answer": "10"
+    }
+  ]
+}

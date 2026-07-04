@@ -1,0 +1,337 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">Student Registration Approvals</h2>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Pending Student Registrations ({{ students|length }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Search students...">
+                    </div>
+
+                    {% if students %}
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="studentsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>CGPA</th>
+                                    <th>Skills</th>
+                                    <th>Resume</th>
+                                    <th>Registration Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for student in students %}
+                                <tr>
+                                    <td>{{ student.id }}</td>
+                                    <td>{{ student.name }}</td>
+                                    <td>{{ student.email }}</td>
+                                    <td>{{ student.cgpa or 'N/A' }}</td>
+                                    <td>
+                                        <span class="skills-text" title="{{ student.skills_text or '' }}">{{ student.skills_text or 'N/A' }}</span>
+                                    </td>
+                                    <td>
+                                        {% if student.resume %}
+                                            <button class="btn btn-sm btn-info view-resume" data-student-id="{{ student.id }}" data-student-name="{{ student.name }}" data-resume="{{ student.resume }}">
+                                                View Resume
+                                            </button>
+                                        {% else %}
+                                            No Resume
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ student.created_at or 'N/A' }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-sm btn-success" data-student-id="{{ student.id }}" onclick="approveStudent(this)">
+                                                <i class="fas fa-check"></i> Approve
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" data-student-id="{{ student.id }}" onclick="rejectStudent(this)">
+                                                <i class="fas fa-times"></i> Reject
+                                            </button>
+                                            <button class="btn btn-sm btn-primary view-details" data-student-id="{{ student.id }}">
+                                                <i class="fas fa-eye"></i> View Details
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No pending student registrations at this time.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resume Modal -->
+<div class="modal fade" id="resumeModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Resume - <span id="resumeStudentName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <pre id="resumeContent" style="white-space: pre-wrap; font-family: monospace; max-height: 500px; overflow-y: auto;"></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="downloadResumeBtn">Download Resume</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Student Details Modal -->
+<div class="modal fade" id="detailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Student Details - <span id="detailsStudentName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="studentDetails">
+                <!-- Student details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" id="approveFromModal">Approve Student</button>
+                <button type="button" class="btn btn-danger" id="rejectFromModal">Reject Student</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Search functionality
+document.getElementById('searchInput').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#studentsTable tbody tr');
+
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+});
+
+// View resume functionality
+document.querySelectorAll('.view-resume').forEach(button => {
+    button.addEventListener('click', function() {
+        const studentId = this.getAttribute('data-student-id');
+        const studentName = this.getAttribute('data-student-name');
+        const resumeContent = this.getAttribute('data-resume');
+
+        document.getElementById('resumeStudentName').textContent = studentName;
+        document.getElementById('resumeContent').textContent = resumeContent;
+        document.getElementById('downloadResumeBtn').addEventListener('click', function() {
+            window.location.href = `/download_resume/${studentId}`;
+        });
+
+        const modal = new bootstrap.Modal(document.getElementById('resumeModal'));
+        modal.show();
+    });
+});
+
+// Approve student function
+function approveStudent(button) {
+    const studentId = button.getAttribute('data-student-id');
+    if (confirm('Are you sure you want to approve this student registration?')) {
+        fetch(`/verify_user/${studentId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error approving student: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+    }
+}
+
+// Reject student function
+function rejectStudent(button) {
+    const studentId = button.getAttribute('data-student-id');
+    if (confirm('Are you sure you want to reject this student registration? This will permanently delete their account.')) {
+        fetch(`/reject_user/${studentId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error rejecting student: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+    }
+}
+
+// View full student details
+function viewFullDetails(studentId) {
+    fetch(`/user_profile/${studentId}`)
+        .then(response => response.text())
+        .then(html => {
+            // Extract student details from the HTML
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            const studentName = doc.querySelector('h2') ? doc.querySelector('h2').textContent : 'Unknown';
+            const studentEmail = doc.querySelector('.card-body p strong') ? doc.querySelector('.card-body p strong').textContent : 'Unknown';
+
+            // Build details content
+            let detailsHtml = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Basic Information</h6>
+                        <p><strong>Name:</strong> ${studentName}</p>
+                        <p><strong>Email:</strong> ${studentEmail}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Academic Information</h6>
+                        <p><strong>CGPA:</strong> ${doc.querySelector('[data-cgpa]') ? doc.querySelector('[data-cgpa]').textContent : 'N/A'}</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <h6>Skills & Resume</h6>
+                        <p><strong>Skills:</strong> ${doc.querySelector('[data-skills]') ? doc.querySelector('[data-skills]').textContent : 'N/A'}</p>
+                        <p><strong>Resume:</strong></p>
+                        <div class="border p-3" style="max-height: 300px; overflow-y: auto;">
+                            <pre>${doc.querySelector('[data-resume]') ? doc.querySelector('[data-resume]').textContent : 'No resume available'}</pre>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('detailsStudentName').textContent = studentName;
+            document.getElementById('studentDetails').innerHTML = detailsHtml;
+
+            // Set up modal buttons with event listeners
+            document.getElementById('approveFromModal').addEventListener('click', () => approveStudent({ getAttribute: () => studentId }));
+            document.getElementById('rejectFromModal').addEventListener('click', () => rejectStudent({ getAttribute: () => studentId }));
+
+            const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+            modal.show();
+        })
+        .catch(error => {
+            alert('Error loading student details: ' + error.message);
+        });
+}
+
+// Table sorting
+document.querySelectorAll('#studentsTable th').forEach(header => {
+    header.addEventListener('click', function() {
+        if (this.textContent.trim() === 'Actions') return; // Don't sort actions column
+
+        const table = document.getElementById('studentsTable');
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const index = Array.from(header.parentNode.children).indexOf(header);
+        const isAscending = header.classList.contains('sort-asc');
+
+        // Remove sort classes
+        document.querySelectorAll('#studentsTable th').forEach(th => {
+            th.classList.remove('sort-asc', 'sort-desc');
+        });
+
+        // Sort rows
+        rows.sort((a, b) => {
+            const aVal = a.children[index].textContent.trim();
+            const bVal = b.children[index].textContent.trim();
+
+            if (isAscending) {
+                header.classList.add('sort-desc');
+                return bVal.localeCompare(aVal);
+            } else {
+                header.classList.add('sort-asc');
+                return aVal.localeCompare(bVal);
+            }
+        });
+
+        // Re-append sorted rows
+        rows.forEach(row => tbody.appendChild(row));
+    });
+});
+// View details functionality
+document.querySelectorAll('.view-details').forEach(button => {
+    button.addEventListener('click', function() {
+        const studentId = this.getAttribute('data-student-id');
+        viewFullDetails(studentId);
+    });
+});
+</script>
+
+<style>
+.skills-text {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sort-asc::after {
+    content: ' ↑';
+}
+
+.sort-desc::after {
+    content: ' ↓';
+}
+
+#studentsTable th {
+    cursor: pointer;
+    user-select: none;
+}
+
+#studentsTable th:hover {
+    background-color: #f8f9fa;
+}
+
+.btn-group .btn {
+    margin-right: 5px;
+}
+
+.btn-group .btn:last-child {
+    margin-right: 0;
+}
+</style>
+{% endblock %}

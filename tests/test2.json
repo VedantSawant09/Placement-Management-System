@@ -1,0 +1,29 @@
+{
+  "title": "Test 2 - Basic Aptitude",
+  "questions": [
+    {
+      "q": "If 5x=20, x = ?",
+      "options": [
+        "2",
+        "4"
+      ],
+      "answer": "4"
+    },
+    {
+      "q": "What is 12% of 50?",
+      "options": [
+        "6",
+        "60"
+      ],
+      "answer": "6"
+    },
+    {
+      "q": "If train A is faster than B, who arrives earlier?",
+      "options": [
+        "A",
+        "B"
+      ],
+      "answer": "A"
+    }
+  ]
+}

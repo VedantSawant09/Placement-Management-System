@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">AI Eligibility Matching Results</h2>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% if student_matches %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Student-Role Matching Results ({{ student_matches|length }} students processed)</h5>
+                </div>
+                <div class="card-body">
+                    {% for student_match in student_matches %}
+                    <div class="mb-4">
+                        <h6 class="text-primary">{{ student_match.student.name }} ({{ student_match.student.email }})</h6>
+                        <p class="mb-2"><strong>CGPA:</strong> {{ student_match.student.cgpa or 'N/A' }}</p>
+
+                        {% if student_match.matches %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Job Role</th>
+                                        <th>Company</th>
+                                        <th>Match Score</th>
+                                        <th>CGPA Eligible</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for match in student_match.matches %}
+                                    <tr>
+                                        <td>{{ match[0] }}</td>
+                                        <td>{{ match[2] }}</td>
+                                        <td>{{ "%.2f"|format(match[1] * 100) }}%</td>
+                                        <td>
+                                            {% if match[3] %}
+                                                <span class="badge bg-success">Eligible</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Not Eligible</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if match[3] and match[1] > 0.3 %}
+                                                <span class="badge bg-success">Recommended</span>
+                                            {% elif match[3] %}
+                                                <span class="badge bg-warning">Consider</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Not Recommended</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <p class="text-muted">No matches found for this student.</p>
+                        {% endif %}
+                    </div>
+                    <hr>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> No students found with sufficient data for AI matching.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

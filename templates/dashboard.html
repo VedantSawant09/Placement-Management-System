@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h2>Dashboard</h2>
+      <p class="text-muted">Welcome back, {{ user["name"] }}!</p>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Quick Actions</h5>
+          <div class="btn-group" role="group">
+            <a href="{{ url_for('tests') }}" class="btn btn-primary">
+              <i class="fas fa-clipboard-list"></i> Take Tests
+            </a>
+            <a href="{{ url_for('schedule') }}" class="btn btn-success">
+              <i class="fas fa-calendar-plus"></i> Schedule Interview
+            </a>
+            {% if user["role"] == "interviewer" %}
+              <a href="{{ url_for('interviewer_dashboard') }}" class="btn btn-warning">
+                <i class="fas fa-users"></i> Interviewer Panel
+              </a>
+            {% endif %}
+            {% if user["role"] == "admin" %}
+              <a href="{{ url_for('admin_dashboard') }}" class="btn btn-danger">
+                <i class="fas fa-cog"></i> Admin Panel
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h5><i class="fas fa-chart-line"></i> Your Test Results</h5>
+        </div>
+        <div class="card-body">
+          {% if results %}
+            <div class="list-group list-group-flush">
+              {% for r in results %}
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <strong>{{ r["test_name"] }}</strong>
+                    <br><small class="text-muted">{{ r["timestamp"] }}</small>
+                  </div>
+                  <div class="text-end">
+                    <span class="badge bg-{{ 'success' if (r['score']/r['total']) >= 0.7 else 'warning' if (r['score']/r['total']) >= 0.5 else 'danger' }}">
+                      {{ r["score"] }}/{{ r["total"] }}
+                    </span>
+                    <br><small>{{ "%.1f"|format((r["score"]/r["total"])*100) }}%</small>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-muted mb-0">No test results yet. <a href="{{ url_for('tests') }}">Take your first test!</a></p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card mt-3">
+        <div class="card-header">
+          <h5><i class="fas fa-calendar-alt"></i> Your Scheduled Slots</h5>
+        </div>
+        <div class="card-body">
+          {% if slots %}
+            <div class="list-group list-group-flush">
+              {% for s in slots %}
+                <div class="list-group-item">
+                  <i class="fas fa-clock"></i> {{ s["slot_time"] }}
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-muted mb-0">No slots scheduled. <a href="{{ url_for('schedule') }}">Schedule an interview!</a></p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h5><i class="fas fa-search"></i> AI Skill Matches</h5>
+        </div>
+        <div class="card-body">
+          {% if matches %}
+            <div class="row">
+              {% for title, score in matches %}
+                <div class="col-md-6 mb-3">
+                  <div class="card h-100">
+                    <div class="card-body text-center">
+                      <h6 class="card-title">{{ title }}</h6>
+                      <div class="mb-2">
+                        <div class="progress" style="height: 20px;">
+                          <div class="progress-bar bg-{{ 'success' if score >= 0.7 else 'warning' if score >= 0.5 else 'danger' }}" role="progressbar"
+                               style="width: 0%;"
+                               data-score="{{ score }}"
+                               aria-valuenow="{{ score * 100 }}"
+                               aria-valuemin="0" aria-valuemax="100">
+                            {{ "%.0f"|format(score * 100) }}%
+                          </div>
+                        </div>
+                      </div>
+                      <small class="text-muted">Match Score</small>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="alert alert-info">
+              <strong>💡 Tip:</strong> Add skills to your profile to see AI-powered job recommendations!
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Profile Summary -->
+      <div class="card mt-3">
+        <div class="card-header">
+          <h5><i class="fas fa-user"></i> Profile Summary</h5>
+        </div>
+        <div class="card-body">
+          <div class="row text-center">
+            <div class="col-4">
+              <h4 class="text-primary">{{ results|length }}</h4>
+              <small class="text-muted">Tests Taken</small>
+            </div>
+            <div class="col-4">
+              <h4 class="text-success">{{ slots|length }}</h4>
+              <small class="text-muted">Slots Booked</small>
+            </div>
+            <div class="col-4">
+              <h4 class="text-info">{{ matches|length }}</h4>
+              <small class="text-muted">Job Matches</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% if user["role"] == "interviewer" %}
+        <div class="card mt-3 border-warning">
+          <div class="card-body">
+            <h5 class="card-title text-warning"><i class="fas fa-user-tie"></i> Interviewer Panel</h5>
+            <p class="card-text">Access interviewer tools to view student profiles and manage interviews.</p>
+            <a href="{{ url_for('interviewer_dashboard') }}" class="btn btn-warning">Go to Interviewer Dashboard</a>
+          </div>
+        </div>
+      {% endif %}
+
+      {% if user["role"] == "admin" %}
+        <div class="card mt-3 border-danger">
+          <div class="card-body">
+            <h5 class="card-title text-danger"><i class="fas fa-crown"></i> Admin Panel</h5>
+            <p class="card-text">Full system administration and user management.</p>
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-danger">Go to Admin Dashboard</a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if interviewer_data %}
+    <div class="row mt-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h5>Registered Users Overview</h5>
+          </div>
+          <div class="card-body">
+            <p class="mb-3">Total Registered Users: <strong>{{ interviewer_data.user_count }}</strong></p>
+
+            <div class="mb-3">
+              <input type="text" id="searchInput" class="form-control" placeholder="Search users...">
+            </div>
+
+            <button class="btn btn-info mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#userDetailsCollapse" aria-expanded="false" aria-controls="userDetailsCollapse">
+              <i class="fas fa-eye"></i> View User Details
+            </button>
+
+            <div class="collapse" id="userDetailsCollapse">
+              <div class="table-responsive">
+                <table class="table table-striped table-hover" id="usersTable">
+                  <thead class="table-dark">
+                    <tr>
+                      <th>ID</th>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Skills</th>
+                      <th>CGPA</th>
+                      <th>Resume</th>
+                      <th>Registered At</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for user in interviewer_data.users %}
+                      <tr>
+                        <td>{{ user["id"] }}</td>
+                        <td>{{ user["name"] }}</td>
+                        <td>{{ user["email"] }}</td>
+                        <td>
+                          <span class="skills-text">{{ user["skills_text"] or "None" }}</span>
+                        </td>
+                        <td>{{ user["cgpa"] or "N/A" }}</td>
+                        <td>
+                          {% if user["resume"] %}
+                            <button class="btn btn-sm btn-primary view-resume" data-user-id="{{ user['id'] }}" data-user-name="{{ user['name'] }}">
+                              <i class="fas fa-eye"></i> View
+                            </button>
+                            <a href="{{ url_for('download_resume', user_id=user['id']) }}" class="btn btn-sm btn-success">
+                              <i class="fas fa-download"></i> Download
+                            </a>
+                          {% else %}
+                            No Resume
+                          {% endif %}
+                        </td>
+                        <td>{{ user["created_at"] or "N/A" }}</td>
+                        <td>
+                          <a href="{{ url_for('user_profile', user_id=user['id']) }}" class="btn btn-sm btn-info">
+                            <i class="fas fa-user"></i> Profile
+                          </a>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Resume Modal -->
+<div class="modal fade" id="resumeModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Resume - <span id="resumeUserName"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <pre id="resumeContent" style="white-space: pre-wrap; font-family: monospace;"></pre>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="downloadResumeBtn">Download Resume</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Add some interactive features
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate progress bars
+    const progressBars = document.querySelectorAll('.progress-bar');
+    progressBars.forEach(bar => {
+        const score = parseFloat(bar.getAttribute('data-score'));
+        const width = (score * 100) + '%';
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.width = width;
+            bar.style.transition = 'width 1s ease-in-out';
+        }, 500);
+    });
+
+    // Add hover effects to cards
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.transition = 'transform 0.2s';
+            this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+        });
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = '';
+        });
+    });
+
+    // View resume functionality
+    document.querySelectorAll('.view-resume').forEach(button => {
+        button.addEventListener('click', function() {
+            const userId = this.getAttribute('data-user-id');
+            const userName = this.getAttribute('data-user-name');
+
+            // Fetch resume content via AJAX
+            fetch(`/user_profile/${userId}`)
+                .then(response => response.text())
+                .then(html => {
+                    // Extract resume content from the HTML (simple parsing)
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const resumeElement = doc.querySelector('.resume-content') || doc.querySelector('pre');
+                    const resumeContent = resumeElement ? resumeElement.textContent : 'Resume content not found';
+
+                    document.getElementById('resumeUserName').textContent = userName;
+                    document.getElementById('resumeContent').textContent = resumeContent;
+                    document.getElementById('downloadResumeBtn').onclick = function() {
+                        window.location.href = `/download_resume/${userId}`;
+                    };
+
+                    const modal = new bootstrap.Modal(document.getElementById('resumeModal'));
+                    modal.show();
+                })
+                .catch(error => {
+                    alert('Error loading resume: ' + error.message);
+                });
+        });
+    });
+
+    // Search functionality for interviewer table
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#usersTable tbody tr');
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+    }
+});
+</script>
+
+<style>
+.card {
+    transition: all 0.3s ease;
+}
+
+.btn-group .btn {
+    margin-right: 5px;
+}
+
+.list-group-item {
+    border: none;
+    padding: 12px 0;
+}
+
+.list-group-item:not(:last-child) {
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.skills-text {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .btn-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .btn-group .btn {
+        margin-bottom: 5px;
+        margin-right: 0;
+    }
+}
+</style>
+{% endblock %}

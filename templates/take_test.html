@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">{{ test.title }}</h3>
+            <small>{{ test.questions|length }} Questions • Estimated time: {{ test.questions|length * 2 }} minutes</small>
+          </div>
+          <div class="card-body">
+            <form method="post">
+              {% for q in test.questions %}
+                <div class="mb-4 p-3 border rounded">
+                  <h5 class="mb-3">Question {{ loop.index }}</h5>
+                  <p class="mb-3">{{ q.q }}</p>
+                  <div class="ms-3">
+                    {% for opt in q.options %}
+                      <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="q{{ loop.index0 }}" value="{{ opt }}" id="q{{ loop.index0 }}_{{ loop.index }}" required>
+                        <label class="form-check-label" for="q{{ loop.index0 }}_{{ loop.index }}">
+                          {{ opt }}
+                        </label>
+                      </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endfor %}
+
+              <div class="text-center mt-4">
+                <button type="submit" class="btn btn-success btn-lg px-5">📤 Submit Test</button>
+                <a href="{{ url_for('index') }}" class="btn btn-secondary btn-lg ms-3">❌ Cancel</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

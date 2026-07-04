@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">Admin Student Management</h2>
+
+            <!-- Students Applied Section -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Students Applied (Pending Approval)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <input type="text" id="pendingSearchInput" class="form-control" placeholder="Search pending students...">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="pendingTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>CGPA</th>
+                                    <th>Skills</th>
+                                    <th>Resume</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                {% if not user.is_verified and user.role == 'student' %}
+                                <tr>
+                                    <td>{{ user.id }}</td>
+                                    <td>{{ user.name }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.cgpa or 'N/A' }}</td>
+                                    <td>
+                                        <span class="skills-text" title="{{ user.skills_text or '' }}">{{ user.skills_text or 'N/A' }}</span>
+                                    </td>
+                                    <td>
+                                        {% if user.resume %}
+                                            <button class="btn btn-sm btn-info view-resume" data-user-id="{{ user.id }}" data-user-name="{{ user.name }}">
+                                                View Resume
+                                            </button>
+                                        {% else %}
+                                            No Resume
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-success" data-user-id="{{ user.id }}" onclick="verifyUser(this)">Approve</button>
+                                        <button class="btn btn-sm btn-danger" data-user-id="{{ user.id }}" onclick="rejectUser(this)">Reject</button>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Registered Students List -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">All Registered Students</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <input type="text" id="studentSearchInput" class="form-control" placeholder="Search students...">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="studentsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>CGPA</th>
+                                    <th>Skills</th>
+                                    <th>Resume</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                {% if user.role == 'student' %}
+                                <tr>
+                                    <td>{{ user.id }}</td>
+                                    <td>{{ user.name }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>
+                                        <span class="badge bg-primary">Student</span>
+                                    </td>
+                                    <td>
+                                        {% if user.is_verified %}
+                                            <span class="badge bg-success">Verified</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user.cgpa or 'N/A' }}</td>
+                                    <td>
+                                        <span class="skills-text">{{ user.skills_text or 'N/A' }}</span>
+                                    </td>
+                                    <td>
+                                        {% if user.resume %}
+                                            <button class="btn btn-sm btn-info view-resume" data-user-id="{{ user.id }}" data-user-name="{{ user.name }}">
+                                                View Resume
+                                            </button>
+                                        {% else %}
+                                            No Resume
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('user_profile', user_id=user.id) }}" class="btn btn-sm btn-primary">View Profile</a>
+                                        {% if not user.is_verified %}
+                                            <button class="btn btn-sm btn-success" data-user-id="{{ user.id }}" onclick="verifyUser(this)">Approve</button>
+                                            <button class="btn btn-sm btn-danger" data-user-id="{{ user.id }}" onclick="rejectUser(this)">Reject</button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resume Modal -->
+<div class="modal fade" id="resumeModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Resume - <span id="resumeUserName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <pre id="resumeContent" style="white-space: pre-wrap; font-family: monospace;"></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="downloadResumeBtn">Download Resume</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Search functionality
+document.getElementById('slotSearchInput').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#slotsTable tbody tr');
+
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+});
+
+// Delete slot function
+function deleteSlot(button) {
+    const slotId = button.getAttribute('data-slot-id');
+    if (confirm('Are you sure you want to delete this slot?')) {
+        fetch(`/delete_slot/${slotId}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to delete slot');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error deleting slot: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error);
+        });
+    }
+}
+</script>
+
+<style>
+.skills-text {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.table th {
+    cursor: pointer;
+    user-select: none;
+}
+
+.table th:hover {
+    background-color: #f8f9fa;
+}
+</style>
+{% endblock %}

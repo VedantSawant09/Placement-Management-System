@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header bg-success text-white">
+            <h3 class="mb-0">📅 Schedule Interview Slot</h3>
+          </div>
+          <div class="card-body">
+            <p class="text-muted">Book your interview slot with available companies. Choose a convenient date and time.</p>
+
+            <form method="post">
+              <div class="mb-3">
+                <label for="slot_time" class="form-label">Select Date & Time</label>
+                <input name="slot_time" type="datetime-local" class="form-control" id="slot_time" required
+                       min="{{ datetime.now().strftime('%Y-%m-%dT%H:%M') }}">
+                <div class="form-text">Choose a future date and time for your interview.</div>
+              </div>
+
+              <div class="mb-3">
+                <label for="interview_type" class="form-label">Interview Type</label>
+                <select name="interview_type" class="form-control" id="interview_type">
+                  <option value="Technical Interview">Technical Interview</option>
+                  <option value="HR Interview">HR Interview</option>
+                  <option value="Aptitude Test">Aptitude Test</option>
+                  <option value="Group Discussion">Group Discussion</option>
+                </select>
+              </div>
+
+              <div class="text-center">
+                <button type="submit" class="btn btn-success btn-lg px-4">📅 Book Slot</button>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary btn-lg ms-3">Back to Dashboard</a>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        {% if slots %}
+        <div class="card mt-4">
+          <div class="card-header bg-info text-white">
+            <h5 class="mb-0">📋 Your Scheduled Slots</h5>
+          </div>
+          <div class="card-body">
+            <div class="list-group">
+              {% for s in slots %}
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <strong>{{ s["slot_time"] }}</strong>
+                    {% if s.get("interview_type") %}
+                      <br><small class="text-muted">{{ s["interview_type"] }}</small>
+                    {% endif %}
+                  </div>
+                  <span class="badge bg-success rounded-pill">Scheduled</span>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

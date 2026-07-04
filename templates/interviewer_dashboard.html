@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+  <h3>Interviewer Dashboard</h3>
+  <p>Welcome, Interviewer!</p>
+
+  <h4>Registered Users Overview</h4>
+  <p>Total Registered Users: {{ user_count }}</p>
+
+  <h4>User Details</h4>
+  {% if users %}
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Skills</th>
+          <th>CGPA</th>
+          <th>Resume</th>
+          <th>Registered At</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+          <tr>
+            <td>{{ user["id"] }}</td>
+            <td>{{ user["name"] }}</td>
+            <td>{{ user["email"] }}</td>
+            <td>{{ user["skills_text"] or "None" }}</td>
+            <td>{{ user["cgpa"] or "N/A" }}</td>
+            <td>
+              {% if user["resume"] %}
+                <a href="{{ url_for('download_resume', user_id=user['id']) }}" class="btn btn-sm btn-primary">Download Resume</a>
+              {% else %}
+                No Resume
+              {% endif %}
+            </td>
+            <td>{{ user["created_at"] or "N/A" }}</td>
+            <td>
+              <a href="{{ url_for('user_profile', user_id=user['id']) }}" class="btn btn-sm btn-info">View Profile</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No users registered yet.</p>
+  {% endif %}
+
+  <a class="btn btn-secondary" href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+{% endblock %}

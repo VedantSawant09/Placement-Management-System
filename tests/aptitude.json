@@ -1,0 +1,29 @@
+{
+  "title": "Aptitude Test",
+  "questions": [
+    {
+      "q": "What is next in series: 2,4,8,16,?",
+      "options": [
+        "32",
+        "24"
+      ],
+      "answer": "32"
+    },
+    {
+      "q": "If area = length*breadth, area of 5x3 = ?",
+      "options": [
+        "15",
+        "8"
+      ],
+      "answer": "15"
+    },
+    {
+      "q": "What is 15*3?",
+      "options": [
+        "45",
+        "50"
+      ],
+      "answer": "45"
+    }
+  ]
+}

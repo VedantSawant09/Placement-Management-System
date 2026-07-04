@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+  <h3>Result - {{ r["test_name"] }}</h3>
+  <p>Score: {{ r["score"] }} / {{ r["total"] }}</p>
+  <p>Submitted: {{ r["timestamp"] }}</p>
+  <a class="btn btn-secondary" href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+{% endblock %}
